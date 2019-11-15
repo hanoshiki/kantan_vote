@@ -1,6 +1,32 @@
 <template>
   <v-container fluid>
     <doughnut-chart :chart-data="chartData" :options="chartOptions" />
+    <v-list subheader two-line flat>
+      <v-subheader>よかったアイデアを選んでください</v-subheader>
+
+      <v-list-item-group>
+        <template v-for="(item, index) in projectLabels">
+          <v-list-item :key="item" @click="selectRow(index)">
+            <v-list-item-action>
+              <v-icon v-if="index != selected" color="grey lighten-1">
+                mdi-star-circle-outline
+              </v-icon>
+              <v-icon v-else color="orange">
+                mdi-star-circle
+              </v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title v-text="item"></v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-divider
+            v-if="index + 1 < projectLabels.length"
+            :key="index"
+          ></v-divider>
+        </template>
+      </v-list-item-group>
+    </v-list>
   </v-container>
 </template>
 
@@ -17,7 +43,6 @@ export default {
       projectIds: [],
       projectVotes: [],
       projectLabels: [],
-      chartDataValues: [],
       chartColors: [
         colors.red.lighten1,
         colors.blue.lighten1,
@@ -30,13 +55,12 @@ export default {
           duration: 1500,
           easing: 'easeInOutCubic'
         }
-      }
+      },
+      selected: -1
     }
   },
   mounted() {
-    setTimeout(() => {
-      // this.getProjects()
-    }, 0)
+    setTimeout(() => {}, 0)
   },
   created() {
     db.collection('projects').onSnapshot((querySnapshot) => {
@@ -77,18 +101,15 @@ export default {
     }
   },
   methods: {
-    getProjects() {
-      this.$store.dispatch('dbProjects/getProjects').then((result) => {
-        console.log(result)
-        const records = result.docs.map((elem) => elem.data())
-        console.log(records)
-        this.projectVotes = records.map(function(element, index, array) {
-          return element.vote
+    addVote(idx) {
+      this.$store
+        .dispatch('dbProjects/addVote', {
+          id: this.projectIds[idx],
+          vote: this.projectVotes[idx] + 1
         })
-        this.projectLabels = records.map(function(element, index, array) {
-          return element.project_name
+        .then((result) => {
+          console.log(result)
         })
-      })
     },
     updateData() {
       const data = []
@@ -96,6 +117,15 @@ export default {
         data.push(this.projectVotes[i])
       }
       this.projectVotes = data
+    },
+    selectRow(index) {
+      console.log('click', index)
+      if (this.selected === index) {
+        this.selected = -1
+      } else {
+        this.selected = index
+        this.addVote(index)
+      }
     }
   }
 }

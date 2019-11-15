@@ -30,5 +30,19 @@ export const actions = {
   // 票数追加
   addVote: (context, content) => {
     console.log(content)
+    return db
+      .collection('projects')
+      .doc(content.id)
+      .update({
+        vote: content.vote
+      })
+      .then(function() {
+        console.log('Document successfully written!')
+        return true
+      })
+      .catch((err) => {
+        console.error('Error: Add Document', err)
+        return false
+      })
   }
 }
