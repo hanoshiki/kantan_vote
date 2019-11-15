@@ -70,6 +70,25 @@ export default {
   components: {
     Logo,
     VuetifyLogo
+  },
+  data() {
+    return {
+      projects: []
+    }
+  },
+  mounted() {
+    setTimeout(() => {
+      this.getProjects()
+    }, 0)
+  },
+  methods: {
+    getProjects() {
+      this.$store.dispatch('dbProjects/getProjects').then((result) => {
+        const records = result.docs.map((elem) => elem.data())
+        console.log(records)
+        this.projects = records
+      })
+    }
   }
 }
 </script>

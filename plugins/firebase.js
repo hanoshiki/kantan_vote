@@ -4,6 +4,7 @@ import 'firebase/firestore'
 import 'firebase/storage'
 
 if (!firebase.apps.length) {
+  console.log(process.env.FB_API_KEY)
   firebase.initializeApp({
     apiKey: process.env.FB_API_KEY,
     authDomain: process.env.FB_AUTH_DOMAIN,
