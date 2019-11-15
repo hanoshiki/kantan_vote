@@ -1,93 +1,101 @@
 <template>
-  <v-layout column justify-center align-center>
-    <v-flex xs12 sm8 md6>
-      <div class="text-center">
-        <logo />
-        <vuetify-logo />
-      </div>
-      <v-card>
-        <v-card-title class="headline">
-          Welcome to the Vuetify + Nuxt.js template
-        </v-card-title>
-        <v-card-text>
-          <p>
-            Vuetify is a progressive Material Design component framework for
-            Vue.js. It was designed to empower developers to create amazing
-            applications.
-          </p>
-          <p>
-            For more information on Vuetify, check out the
-            <a href="https://vuetifyjs.com" target="_blank"> documentation </a>.
-          </p>
-          <p>
-            If you have questions, please join the official
-            <a href="https://chat.vuetifyjs.com/" target="_blank" title="chat">
-              discord </a
-            >.
-          </p>
-          <p>
-            Find a bug? Report it on the github
-            <a
-              href="https://github.com/vuetifyjs/vuetify/issues"
-              target="_blank"
-              title="contribute"
-            >
-              issue board </a
-            >.
-          </p>
-          <p>
-            Thank you for developing with Vuetify and I look forward to bringing
-            more exciting features in the future.
-          </p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
-          <hr class="my-3" />
-          <a href="https://nuxtjs.org/" target="_blank">
-            Nuxt Documentation
-          </a>
-          <br />
-          <a href="https://github.com/nuxt/nuxt.js" target="_blank">
-            Nuxt GitHub
-          </a>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="primary" nuxt to="/inspire">
-            Continue
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-flex>
-  </v-layout>
+  <v-container fluid>
+    <doughnut-chart :chart-data="chartData" :options="chartOptions" />
+  </v-container>
 </template>
 
 <script>
-import Logo from '~/components/Logo.vue'
-import VuetifyLogo from '~/components/VuetifyLogo.vue'
+import colors from 'vuetify/es5/util/colors'
+import firebase from '~/plugins/firebase.js'
+
+const db = firebase.firestore()
 
 export default {
-  components: {
-    Logo,
-    VuetifyLogo
-  },
+  components: {},
   data() {
     return {
-      projects: []
+      projectIds: [],
+      projectVotes: [],
+      projectLabels: [],
+      chartDataValues: [],
+      chartColors: [
+        colors.red.lighten1,
+        colors.blue.lighten1,
+        colors.yellow.lighten1,
+        colors.green.lighten1
+      ],
+      chartOptions: {
+        maintainAspectRatio: false,
+        animation: {
+          duration: 1500,
+          easing: 'easeInOutCubic'
+        }
+      }
     }
   },
   mounted() {
     setTimeout(() => {
-      this.getProjects()
+      // this.getProjects()
     }, 0)
+  },
+  created() {
+    db.collection('projects').onSnapshot((querySnapshot) => {
+      querySnapshot.docChanges().forEach((change) => {
+        // 追加
+        if (change.type === 'added') {
+          console.log('added', change.doc.id, change.doc.data())
+          this.projectIds.push(change.doc.id)
+          this.projectLabels.push(change.doc.data().project_name)
+          this.projectVotes.push(change.doc.data().vote)
+        }
+        // 更新
+        else if (change.type === 'modified') {
+          console.log('modified', change.doc.id, change.doc.data())
+          const idx = this.projectIds.indexOf(change.doc.id)
+          this.projectVotes[idx] = change.doc.data().vote
+          this.updateData()
+          console.log(this.projectVotes)
+        }
+        // 削除
+        else if (change.type === 'removed') {
+          console.log('removed', change.doc.id)
+        }
+      })
+    })
+  },
+  computed: {
+    chartData() {
+      return {
+        datasets: [
+          {
+            data: this.projectVotes,
+            backgroundColor: this.chartColors
+          }
+        ],
+        labels: this.projectLabels
+      }
+    }
   },
   methods: {
     getProjects() {
       this.$store.dispatch('dbProjects/getProjects').then((result) => {
+        console.log(result)
         const records = result.docs.map((elem) => elem.data())
         console.log(records)
-        this.projects = records
+        this.projectVotes = records.map(function(element, index, array) {
+          return element.vote
+        })
+        this.projectLabels = records.map(function(element, index, array) {
+          return element.project_name
+        })
       })
+    },
+    updateData() {
+      const data = []
+      for (let i = 0; i < this.projectLabels.length; i++) {
+        data.push(this.projectVotes[i])
+      }
+      this.projectVotes = data
     }
   }
 }
