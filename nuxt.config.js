@@ -34,7 +34,8 @@ export default {
     {
       src: '@/plugins/vue-chartjs',
       ssr: false
-    }
+    },
+    { src: '~plugins/persistedstate.js', ssr: false }
   ],
   /*
    ** Nuxt.js dev-modules

@@ -28,7 +28,7 @@ export const actions = {
     console.log(content)
   },
   // 票数追加
-  addVote: (context, content) => {
+  updateVote: (context, content) => {
     console.log(content)
     return db
       .collection('projects')

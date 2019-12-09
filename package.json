@@ -18,11 +18,13 @@
     "css-loader": "^3.2.0",
     "dotenv": "^8.2.0",
     "firebase": "^7.4.0",
+    "module": "^1.2.5",
     "nuxt": "^2.10.1",
     "vue": "2.6.10",
     "vue-chartjs": "^3.5.0",
     "vue-cli-plugin-vuetify": "^2.0.2",
     "vue-template-compiler": "2.6.10",
+    "vuex-persistedstate": "^2.7.0",
     "webpack": "4.36.0"
   },
   "devDependencies": {

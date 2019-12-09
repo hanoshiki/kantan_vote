@@ -1,36 +1,47 @@
 <template>
   <v-container fluid>
     <doughnut-chart :chart-data="chartData" :options="chartOptions" />
-    <v-list subheader two-line flat>
-      <v-subheader>よかったアイデアを選んでください</v-subheader>
+    <v-chip>あなたは {{ projectLabels[selected] }} に投票しています！</v-chip>
+    <v-subheader>よかったアイデアを選んでください</v-subheader>
 
-      <v-list-item-group>
-        <template v-for="(item, index) in projectLabels">
-          <v-list-item :key="item" @click="selectRow(index)">
-            <v-list-item-action>
-              <v-icon v-if="index != selected" color="grey lighten-1">
-                mdi-star-circle-outline
+    <v-container
+      id="scroll-target"
+      style="max-height: 300px"
+      class="overflow-y-auto"
+    >
+      <v-list subheader two-line flat>
+        <v-list-item-group>
+          <template v-for="(item, index) in projectLabels">
+            <v-list-item :key="item" @click="selectRow(index)">
+              <v-icon :color="chartColors[index]">
+                mdi-card
               </v-icon>
-              <v-icon v-else color="orange">
-                mdi-star-circle
-              </v-icon>
-            </v-list-item-action>
-            <v-list-item-content>
-              <v-list-item-title v-text="item"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
+              <v-list-item-content>
+                <v-list-item-title v-text="item"></v-list-item-title>
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-icon v-if="index != selected" color="grey lighten-1">
+                  mdi-star-circle-outline
+                </v-icon>
+                <v-icon v-else color="orange">
+                  mdi-star-circle
+                </v-icon>
+              </v-list-item-action>
+            </v-list-item>
 
-          <v-divider
-            v-if="index + 1 < projectLabels.length"
-            :key="index"
-          ></v-divider>
-        </template>
-      </v-list-item-group>
-    </v-list>
+            <v-divider
+              v-if="index + 1 < projectLabels.length"
+              :key="index"
+            ></v-divider>
+          </template>
+        </v-list-item-group>
+      </v-list>
+    </v-container>
   </v-container>
 </template>
 
 <script>
+import { mapActions, mapState, mapGetters } from 'vuex'
 import colors from 'vuetify/es5/util/colors'
 import firebase from '~/plugins/firebase.js'
 
@@ -47,16 +58,27 @@ export default {
         colors.red.lighten1,
         colors.blue.lighten1,
         colors.yellow.lighten1,
-        colors.green.lighten1
+        colors.green.lighten1,
+        colors.orange.lighten1,
+        colors.red.darken3,
+        colors.blue.darken3,
+        colors.yellow.darken3,
+        colors.green.darken3,
+        colors.orange.darken3
       ],
       chartOptions: {
         maintainAspectRatio: false,
         animation: {
           duration: 1500,
           easing: 'easeInOutCubic'
+        },
+        tooltips: {
+          enabled: false
+        },
+        legend: {
+          display: false
         }
-      },
-      selected: -1
+      }
     }
   },
   mounted() {
@@ -88,7 +110,10 @@ export default {
     })
   },
   computed: {
+    ...mapState('selected', ['selected']),
+    ...mapGetters('selected', ['selected']),
     chartData() {
+      console.log('selected', this.selected)
       return {
         datasets: [
           {
@@ -101,11 +126,22 @@ export default {
     }
   },
   methods: {
+    ...mapActions('selected', ['setSelected']),
     addVote(idx) {
       this.$store
-        .dispatch('dbProjects/addVote', {
+        .dispatch('dbProjects/updateVote', {
           id: this.projectIds[idx],
           vote: this.projectVotes[idx] + 1
+        })
+        .then((result) => {
+          console.log(result)
+        })
+    },
+    reduceVote(idx) {
+      this.$store
+        .dispatch('dbProjects/updateVote', {
+          id: this.projectIds[idx],
+          vote: this.projectVotes[idx] - 1
         })
         .then((result) => {
           console.log(result)
@@ -121,9 +157,13 @@ export default {
     selectRow(index) {
       console.log('click', index)
       if (this.selected === index) {
-        this.selected = -1
+        this.setSelected(-1)
+        this.reduceVote(index)
       } else {
-        this.selected = index
+        if (this.selected !== -1) {
+          this.reduceVote(this.selected)
+        }
+        this.setSelected(index)
         this.addVote(index)
       }
     }
