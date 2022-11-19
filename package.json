@@ -19,7 +19,7 @@
     "dotenv": "^8.2.0",
     "firebase": "^7.4.0",
     "module": "^1.2.5",
-    "nuxt": "^2.10.1",
+    "nuxt": "^2.15.8",
     "vue": "2.6.10",
     "vue-chartjs": "^3.5.0",
     "vue-cli-plugin-vuetify": "^2.0.2",
